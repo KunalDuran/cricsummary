@@ -43,7 +43,7 @@ class Duranz(Vizuals):
 
     def summary(self, team=1, info=True, plotly=False):
         if team == 1: team = self.team1_df
-        else: df = self.team2_df
+        else: team = self.team2_df
         batsman_score = team.groupby('Batsman')['Runs_off_bat'].sum()
         balls_played = team.groupby('Batsman')['Runs_off_bat'].count()
 
