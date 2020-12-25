@@ -45,7 +45,7 @@ class Duranz(Vizuals):
         if team == 1: team = self.team1_df
         else: team = self.team2_df
         batsman_score = team.groupby('Batsman')['Runs_off_bat'].sum()
-        balls_played = team.groupby('Batsman')['Runs_off_bat'].count()
+        balls_played = team.groupby(['Extra_type','Batsman']).count().loc[['-', 'legbyes', 'byes']].sum(level='Batsman')['Over']
 
         def match_info():
             result = self.info['outcome']

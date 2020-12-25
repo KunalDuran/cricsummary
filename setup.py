@@ -6,7 +6,7 @@ with open('ReadMe.md') as file:
 
 setup(
     name="cricsummary",
-    version="0.0.3",
+    version="0.0.4",
     description="Create summary table and charts from cricsheet data",
     long_description=readme,
     long_description_content_type="text/markdown",
