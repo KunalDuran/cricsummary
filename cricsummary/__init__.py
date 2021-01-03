@@ -1,4 +1,4 @@
-__version__ = '0.0.4'
+__version__ = '0.0.6'
 __author__ = 'Kunal Duran'
 
 from cricsummary.duranz import Duranz

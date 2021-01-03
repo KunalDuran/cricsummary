@@ -1,4 +1,4 @@
-import yaml
+import yaml, os
 import pandas as pd
 
 def yaml_to_csv(match_file, output_file=False):
@@ -30,10 +30,10 @@ def yaml_to_csv(match_file, output_file=False):
         df['Over'] = df['Over_and_ball'].apply(lambda x: ceil(x))
         return df
     if output_file:
-        file_path1 = input('Enter name for team1 csv : ')
-        file_path2 = input('Enter name for team2 csv : ')
+        file_path1 = f"{os.path.splitext(os.path.split(match_file)[-1])[0]}_team1.csv"
+        file_path2 = f"{os.path.splitext(os.path.split(match_file)[-1])[0]}_team2.csv"
+
         organizing(team1).assign(Innings_number=1).to_csv(file_path1, index=False)
         organizing(team2).assign(Innings_number=2).to_csv(file_path2, index=False)
     else:
         return organizing(team1).assign(Innings_number=1), organizing(team2).assign(Innings_number=2), info
-

@@ -41,11 +41,12 @@ class Duranz(Vizuals):
             self.team2_df['Total'] = self.team2_df.loc[:,['Runs_off_bat','Extras']].sum(axis=1).cumsum()
 
 
-    def summary(self, team=1, info=True, plotly=False):
+    def summary(self, team=1, info=True):
         if team == 1: team = self.team1_df
         else: team = self.team2_df
         batsman_score = team.groupby('Batsman')['Runs_off_bat'].sum()
-        balls_played = team.groupby(['Extra_type','Batsman']).count().loc[['-', 'legbyes', 'byes']].sum(level='Batsman')['Over']
+        extras_played = [x for x in ['-', 'legbyes', 'byes'] if team['Extra_type'].isin([x]).any()]
+        balls_played = team.groupby(['Extra_type','Batsman']).count().loc[extras_played].sum(level='Batsman')['Over']
 
         def match_info():
             result = self.info['outcome']
@@ -64,7 +65,7 @@ class Duranz(Vizuals):
         def boundaries(df):
             boundary = df.groupby(['Runs_off_bat','Batsman']).count()
             fours = boundary.loc[4].iloc[:,0].to_frame("4's")
-            sixes = boundary.loc[6].iloc[:,0].to_frame("6's")
+            sixes = boundary.loc[6].iloc[:,0].to_frame("6's") if 6 in boundary.index else pd.DataFrame({'Batsman': [], "6's":[]})
             boundaries_df = fours.merge(sixes, how='outer', on='Batsman')
             return boundaries_df
 
@@ -79,23 +80,13 @@ class Duranz(Vizuals):
         def wicket(df):
             return df.query('Kind_of_wicket != 0')[['Batsman','Kind_of_wicket', 'Bowler']]
         
-        def plot_ly(df):
-            fig = go.Figure(data=[go.Table(
-            header=dict(values=list(df.columns),
-                    fill_color='paleturquoise',
-                    align='left'),
-            cells=dict(values=[df[x] for x in list(df.columns)],
-                   fill_color='lavender',
-                   align='left'))])
-            fig.show()
         
         temp_result = pd.DataFrame([batsman_score, balls_played], index=['Runs', 'Balls']).T.reindex(batting_order(team))
         result = temp_result.merge(wicket(team),how='outer', on='Batsman').fillna('-')
-        result = result.join(boundaries(team), how='outer', on='Batsman').fillna(0)
+        result = result.merge(boundaries(team), how='outer', on='Batsman').fillna(0)
         result = result[['Batsman','Kind_of_wicket', 'Bowler', "4's" ,"6's", 'Runs', 'Balls']]
         result[["4's","6's"]] = result[["4's","6's"]].astype(int)
-    
-        if plotly: return plot_ly(result)
+
             
         return print(match_info() if self.match.endswith('yaml') else "", result, fall_of_wicket(team), extras(team), sep="\n\n") if info else result
 

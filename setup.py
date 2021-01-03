@@ -6,8 +6,8 @@ with open('ReadMe.md') as file:
 
 setup(
     name="cricsummary",
-    version="0.0.4",
-    description="Create summary table and charts from cricsheet data",
+    version="0.0.6",
+    description="Perform Analysis, Create summary table and charts from cricsheet data",
     long_description=readme,
     long_description_content_type="text/markdown",
     url="https://github.com/KunalDuran/cricsummary",
@@ -22,5 +22,5 @@ setup(
     ],
     packages=["cricsummary"],
     include_package_data=True,
-    install_requires=["numpy", "pandas", "matplotlib", "seaborn", "PyYAML", "plotly"],
+    install_requires=["numpy", "pandas", "matplotlib", "seaborn", "PyYAML"],
 )
