@@ -43,7 +43,7 @@ class Vizuals:
         plt.legend()
         plt.title('Worm', fontsize=26)
         plt.xlabel('Overs',fontsize=16)
-        plt.xticks(np.arange(1, max_over+1), step=step)
+        plt.xticks(np.arange(1, max_over+1, step=step))
         plt.ylabel('Innings Runs',fontsize=16)
         plt.show()
         
