@@ -12,7 +12,7 @@ class Duranz(Vizuals):
     def __init__(self, match):
         self.match = match
         if match.endswith('.yaml'):
-            self.team1_df, self.team2_df, self.info = yaml_to_csv(match)
+            self.team1_df, self.team2_df, self.team3_df, self.team4_df, self.info = yaml_to_csv(match)
         else:
             columns =   ['ball',
             'Innings_number', 'Over_and_ball',
@@ -37,13 +37,19 @@ class Duranz(Vizuals):
 
             self.team1_df = self.df[self.df['Innings_number'] == 1]
             self.team2_df = self.df[self.df['Innings_number'] == 2]
+            self.team3_df = self.df[self.df['Innings_number'] == 3]
+            self.team4_df = self.df[self.df['Innings_number'] == 4]
             self.team1_df['Total'] = self.team1_df.loc[:,['Runs_off_bat','Extras']].sum(axis=1).cumsum()
             self.team2_df['Total'] = self.team2_df.loc[:,['Runs_off_bat','Extras']].sum(axis=1).cumsum()
+            self.team3_df['Total'] = self.team3_df.loc[:,['Runs_off_bat','Extras']].sum(axis=1).cumsum()
+            self.team4_df['Total'] = self.team4_df.loc[:,['Runs_off_bat','Extras']].sum(axis=1).cumsum()
 
 
     def summary(self, team=1, info=True):
         if team == 1: team = self.team1_df
-        else: team = self.team2_df
+        elif team == 2: team = self.team2_df
+        elif team == 3: team = self.team3_df
+        else: team = self.team4_df
         batsman_score = team.groupby('Batsman')['Runs_off_bat'].sum()
         extras_played = [x for x in ['-', 'legbyes', 'byes'] if team['Extra_type'].isin([x]).any()]
         balls_played = team.groupby(['Extra_type','Batsman']).count().loc[extras_played].sum(level='Batsman')['Over']
