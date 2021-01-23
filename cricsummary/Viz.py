@@ -34,10 +34,16 @@ class Vizuals:
                 plt.plot(ass.index, ass[['Runs_off_bat', 'Extras']].sum(axis=1).cumsum(), label=l)
                 max_over = max(max_over, max(ass.index))
 
+        if max_over > 50:
+            step = 10
+
+        else:
+            step = 1
+
         plt.legend()
         plt.title('Worm', fontsize=26)
         plt.xlabel('Overs',fontsize=16)
-        plt.xticks(np.arange(1, max_over+1))
+        plt.xticks(np.arange(1, max_over+1), step=step)
         plt.ylabel('Innings Runs',fontsize=16)
         plt.show()
         
