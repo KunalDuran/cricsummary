@@ -5,12 +5,12 @@ def yaml_to_csv(match_file, output_file=False):
     with open(match_file, 'r') as f:
         file = yaml.safe_load(f)
     info = file['info']
-    team2 = file['innings'][1]['2nd innings']['deliveries']
-    team1 = file['innings'][0]['1st innings']['deliveries']
+    
+    innings = file['innings']
+    
+    length = len(innings)
+    
     def organizing(team):
-
-        find_extras = lambda record: list(record.values())[0].get('extras')
-
         structured = {}
         structured['Over_and_ball'] = [key for ball in team for key in ball]
         structured['Batsman'] = [list(ball.values())[0].get('batsman') for ball in team]
@@ -18,7 +18,6 @@ def yaml_to_csv(match_file, output_file=False):
         structured['Bowler'] = [list(ball.values())[0].get('bowler') for ball in team]
         structured['runs'] = [list(ball.values())[0].get('runs') for ball in team]
         structured['wicket'] = [list(ball.values())[0].get('wicket',0) for ball in team]
-        structured['Extra_type'] = [list(find_extras(record).keys())[0] if find_extras(record) else "-" for record in team]
         df = pd.DataFrame(structured)
         df['Runs_off_bat'] = df.runs.apply(lambda x: x.get('batsman'))
         df['Extras'] = df.runs.apply(lambda x: x.get('extras'))
@@ -29,11 +28,82 @@ def yaml_to_csv(match_file, output_file=False):
         from math import ceil
         df['Over'] = df['Over_and_ball'].apply(lambda x: ceil(x))
         return df
-    if output_file:
-        file_path1 = f"{os.path.splitext(os.path.split(match_file)[-1])[0]}_team1.csv"
-        file_path2 = f"{os.path.splitext(os.path.split(match_file)[-1])[0]}_team2.csv"
 
-        organizing(team1).assign(Innings_number=1).to_csv(file_path1, index=False)
-        organizing(team2).assign(Innings_number=2).to_csv(file_path2, index=False)
-    else:
-        return organizing(team1).assign(Innings_number=1), organizing(team2).assign(Innings_number=2), info
+    file_path1 = f"{os.path.splitext(os.path.split(match_file)[-1])[0]}_team1.csv"
+    file_path2 = f"{os.path.splitext(os.path.split(match_file)[-1])[0]}_team2.csv"
+    file_path3 = f"{os.path.splitext(os.path.split(match_file)[-1])[0]}_team3.csv"
+    file_path4 = f"{os.path.splitext(os.path.split(match_file)[-1])[0]}_team4.csv"
+    
+    if length == 0:
+        print('No innings data found')
+        return None, None, None, None, info
+    
+    elif length == 1:
+        team1 = innings[0]['1st innings']['deliveries']
+        team_name1 = innings[0]['1st innings']['team']
+        df1 = organizing(team1).assign(Innings_number=1,team=team_name1)
+
+        if output_file:
+            df1.to_csv(file_path1)
+        else:
+            return df1, None, None, None, info
+        
+    elif length == 2:
+        team_name1 = innings[0]['1st innings']['team']
+        team_name2 = innings[1]['2nd innings']['team']
+        team2 = innings[1]['2nd innings']['deliveries']
+        team1 = innings[0]['1st innings']['deliveries']
+
+        df1 = organizing(team1).assign(Innings_number=1,team=team_name1)
+        df2 = organizing(team2).assign(Innings_number=2,team=team_name2)
+    
+        if output_file:
+            df1.to_csv(file_path1)
+            df2.to_csv(file_path2)
+
+        else:
+            return df1, df2, None, None, info
+
+    elif length == 3:
+        team_name1 = innings[0]['1st innings']['team']
+        team_name2 = innings[1]['2nd innings']['team']
+        team_name3 = innings[2]['3rd innings']['team']
+        team3 = innings[2]['3rd innings']['deliveries']
+        team2 = innings[1]['2nd innings']['deliveries']
+        team1 = innings[0]['1st innings']['deliveries']
+
+        df1 = organizing(team1).assign(Innings_number=1,team=team_name1)
+        df2 = organizing(team2).assign(Innings_number=2,team=team_name2)
+        df3 = organizing(team3).assign(Innings_number=3,team=team_name3)
+    
+        if output_file:
+            df1.to_csv(file_path1)
+            df2.to_csv(file_path2)
+            df3.to_csv(file_path3)
+
+        else:
+            return df1, df2, df3,None, info
+
+    elif length == 3:
+        team_name1 = innings[0]['1st innings']['team']
+        team_name2 = innings[1]['2nd innings']['team']
+        team_name3 = innings[2]['3rd innings']['team']
+        team_name4 = innings[3]['4th innings']['team']
+        team4 = innings[3]['4th innings']['deliveries']
+        team3 = innings[2]['3rd innings']['deliveries']
+        team2 = innings[1]['2nd innings']['deliveries']
+        team1 = innings[0]['1st innings']['deliveries']
+
+        df1 = organizing(team1).assign(Innings_number=1,team=team_name1)
+        df2 = organizing(team2).assign(Innings_number=2,team=team_name2)
+        df3 = organizing(team3).assign(Innings_number=3,team=team_name3)
+        df4 = organizing(team4).assign(Innings_number=4,team=team_name4)
+    
+        if output_file:
+            df1.to_csv(file_path1)
+            df2.to_csv(file_path2)
+            df3.to_csv(file_path3)
+            df4.to_csv(file_path4)
+
+        else:
+            return df1, df2, df3, df4, info
