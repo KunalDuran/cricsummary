@@ -1,6 +1,6 @@
 from setuptools import setup
 
-with open('ReadMe.md') as file:
+with open('Readme.md') as file:
     readme = file.read()
 
 
