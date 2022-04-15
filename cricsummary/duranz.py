@@ -1,8 +1,7 @@
 import pandas as pd 
-import plotly.graph_objects as go
 import warnings
 from .Viz import Vizuals
-from .convert_yaml_to_csv import yaml_to_csv
+from .converters import  json_to_csv
 
 warnings.filterwarnings("ignore")
 
@@ -11,113 +10,76 @@ class Duranz(Vizuals):
 
     def __init__(self, match):
         self.match = match
-        if match.endswith('.yaml'):
-            self.team1_df, self.team2_df, self.team3_df, self.team4_df, self.info = yaml_to_csv(match)
+        if match.endswith('.json'):
+            self.teams_df, self.info = json_to_csv(match)
         else:
-            columns =   ['ball',
-            'Innings_number', 'Over_and_ball',
-            'Batting team name',
-            'Batsman',
-            'Non_striker',
-            'Bowler',
-            'Runs_off_bat',
-            'Extras',
-            'Kind_of_wicket',
-            'Dismissed_player']
+            print('enter a valid json file')
 
 
-            self.df = pd.read_csv(self.match, skiprows=21, header= None,names=columns)
-            self.df.drop(columns=['ball'], inplace=True)
-            self.df.fillna(0, inplace=True)
+    def get_teamdf(self, n):
+        for team_inn in self.teams_df:
+            if team_inn.endswith(str(n)):
+                return self.teams_df[team_inn]
 
 
-            from math import ceil
-            self.df['Over'] = self.df['Over_and_ball'].apply(lambda x: ceil(x))
+    def scorecard(self, team=1):
+        team = self.get_teamdf(team)
+
+        batsman_score = team.groupby('batter')['runs_by_bat'].sum()
+        extras_played = [x for x in ['-', 'legbyes', 'byes', 'noballs'] if team['extra_type'].isin([x]).any()]
+        balls_played = team.groupby(['extra_type','batter']).count().loc[extras_played].sum(level='batter')['over']
 
 
-            self.team1_df = self.df[self.df['Innings_number'] == 1]
-            self.team2_df = self.df[self.df['Innings_number'] == 2]
-            self.team3_df = self.df[self.df['Innings_number'] == 3]
-            self.team4_df = self.df[self.df['Innings_number'] == 4]
-            self.team1_df['Total'] = self.team1_df.loc[:,['Runs_off_bat','Extras']].sum(axis=1).cumsum()
-            self.team2_df['Total'] = self.team2_df.loc[:,['Runs_off_bat','Extras']].sum(axis=1).cumsum()
-            self.team3_df['Total'] = self.team3_df.loc[:,['Runs_off_bat','Extras']].sum(axis=1).cumsum()
-            self.team4_df['Total'] = self.team4_df.loc[:,['Runs_off_bat','Extras']].sum(axis=1).cumsum()
-
-
-    def summary(self, team=1, info=True):
-        if team == 1: team = self.team1_df
-        elif team == 2: team = self.team2_df
-        elif team == 3: team = self.team3_df
-        else: team = self.team4_df
-        batsman_score = team.groupby('Batsman')['Runs_off_bat'].sum()
-        extras_played = [x for x in ['-', 'legbyes', 'byes'] if team['Extra_type'].isin([x]).any()]
-        balls_played = team.groupby(['Extra_type','Batsman']).count().loc[extras_played].sum(level='Batsman')['Over']
-
-        def match_info():
-            result = self.info['outcome']
-            by = list(*result['by'].items())
-            outcome = f"{result['winner']} Won by {by[1]} {by[0]}"
-            teams_playing = "{} vs {}".format(self.info['teams'][0], self.info['teams'][1])
-            return "{}\n\n{}".format(teams_playing, outcome) 
-        
         def batting_order(df):
-            openers = list(df.iloc[0][['Batsman','Non_striker']].values)
+            openers = list(df.iloc[0][['batter','non_striker']].values)
             all_players = openers.copy()
-            for player in df.Batsman:
+            for player in df['batter']:
                 if player not in all_players: all_players.append(player)
             return all_players
 
+
         def boundaries(df):
-            boundary = df.groupby(['Runs_off_bat','Batsman']).count()
+            boundary = df.groupby(['runs_by_bat','batter']).count()
             fours = boundary.loc[4].iloc[:,0].to_frame("4's")
-            sixes = boundary.loc[6].iloc[:,0].to_frame("6's") if 6 in boundary.index else pd.DataFrame({'Batsman': [], "6's":[]})
-            boundaries_df = fours.merge(sixes, how='outer', on='Batsman')
+            sixes = boundary.loc[6].iloc[:,0].to_frame("6's") if 6 in boundary.index else pd.DataFrame({'batter': [], "6's":[]})
+            boundaries_df = fours.merge(sixes, how='outer', on='batter')
             return boundaries_df
 
-        def fall_of_wicket(df):
-            fow = df[df['Kind_of_wicket']!=0]
-            fow = zip(fow.Total, range(1,len(fow.Total)+1))
-            return "FOW: "+" ".join([f"{runs}-{wicket}" for runs, wicket in fow])
-
-        def extras(df):
-            return f"Extras: {df['Extras'].sum()}"
 
         def wicket(df):
-            return df.query('Kind_of_wicket != 0')[['Batsman','Kind_of_wicket', 'Bowler']]
+            result = df.query('wicket_type != 0')[['batter','wicket_type', 'fielder', 'bowler']]
+            return result
         
         
-        temp_result = pd.DataFrame([batsman_score, balls_played], index=['Runs', 'Balls']).T.reindex(batting_order(team))
-        result = temp_result.merge(wicket(team),how='outer', on='Batsman').fillna('-')
-        result = result.merge(boundaries(team), how='outer', on='Batsman').fillna(0)
-        result = result[['Batsman','Kind_of_wicket', 'Bowler', "4's" ,"6's", 'Runs', 'Balls']]
+        temp_result = pd.DataFrame([batsman_score, balls_played], index=['runs', 'balls']).T.reindex(batting_order(team))
+        result = temp_result.merge(wicket(team),how='outer', on='batter').fillna('-')
+        result = result.merge(boundaries(team), how='outer', on='batter').fillna(0)
+        result = result[['batter','wicket_type', 'fielder', 'bowler', "4's" ,"6's", 'runs', 'balls']]
         result[["4's","6's"]] = result[["4's","6's"]].astype(int)
-
-            
-        return print(match_info() if self.match.endswith('yaml') else "", result, fall_of_wicket(team), extras(team), sep="\n\n") if info else result
+        return result
 
 
+    def match_info(self):
+        result = self.info['outcome']
+        by = list(*result['by'].items())
+        outcome = f"{result['winner']} Won by {by[1]} {by[0]}"
+        teams_playing = "{} vs {}".format(self.info['teams'][0], self.info['teams'][1])
+        match_infos = {
+            'toss' : f"{self.info['toss']['winner']} won the toss and decided to {self.info['toss']['decision']} first.",
+            'outcome' : outcome,
+            'heading' : teams_playing
+        }
+        return match_infos 
 
 
+    def fall_of_wicket(self, team=1):
+        df = self.get_teamdf(team)
+        df['running_total'] = df['total'].cumsum()
+        fow = df[df['wicket_type']!=0]
+        fow = zip(fow['running_total'], range(1,len(fow['running_total'])+1))
+        return "FOW: "+" ".join([f"{runs}-{wicket}" for runs, wicket in fow])
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    def extras(self, team=1):
+        df = self.get_teamdf(team)
+        return f"Extras: {df['extra_runs'].sum()}"
