@@ -24,6 +24,12 @@ def convert_over_to_df(over_data):
         over_df['fielder'] = over_df['wickets'].apply(get_fielder_name)
         over_df.drop(columns=['wickets'], inplace=True)
         
+
+    over_df['extra_type'] = np.nan
+    over_df['wicket_type'] = np.nan
+    over_df['player_out'] = np.nan
+    over_df['fielder'] = np.nan
+        
         
     over_df.drop(columns=['runs'], inplace=True)
     return over_df
