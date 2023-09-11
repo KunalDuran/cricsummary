@@ -27,7 +27,8 @@ class Duranz(Vizuals):
 
         batsman_score = team.groupby('batter')['runs_by_bat'].sum()
         extras_played = [x for x in ['-', 'legbyes', 'byes', 'noballs'] if team['extra_type'].isin([x]).any()]
-        balls_played = team.groupby(['extra_type','batter']).count().loc[extras_played].sum(level='batter')['over']
+        balls_played = team.groupby('batter').count()['over']
+        # balls_played = team.groupby(['extra_type','batter']).count().loc[extras_played].sum(level='batter')['over']
 
 
         def batting_order(df):
@@ -51,10 +52,11 @@ class Duranz(Vizuals):
             return result
         
         
-        temp_result = pd.DataFrame([batsman_score, balls_played], index=['runs', 'balls']).T.reindex(batting_order(team))
+        temp_result = pd.DataFrame([batsman_score, balls_played,(batsman_score/balls_played)*100], index=['runs', 'balls','SR']).T.reindex(batting_order(team))
+        
         result = temp_result.merge(wicket(team),how='outer', on='batter').fillna('-')
         result = result.merge(boundaries(team), how='outer', on='batter').fillna(0)
-        result = result[['batter','wicket_type', 'fielder', 'bowler', "4's" ,"6's", 'runs', 'balls']]
+        result = result[['batter','wicket_type', 'fielder', 'bowler','runs', 'balls', "4's" ,"6's",'SR']]
         result[["4's","6's"]] = result[["4's","6's"]].astype(int)
         return result
 
