@@ -30,7 +30,7 @@ class Vizuals:
 
         for f,l in zip(frames,labels):
             if f is not None:
-                ass = f.groupby('over').sum()
+                ass = f.groupby('over')[['total','extra_runs']].sum()
                 plt.plot(ass.index, ass[['total', 'extra_runs']].sum(axis=1).cumsum(), label=l)
                 max_over = max(max_over, max(ass.index))
 
