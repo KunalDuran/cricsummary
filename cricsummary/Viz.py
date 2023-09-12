@@ -9,8 +9,8 @@ class Vizuals:
         team_df = self.get_teamdf(team)
         plt.style.use('ggplot')
         plt.figure(figsize=(15,9))
-        ass = team_df.groupby('over').sum()
-        sns.barplot(x=ass.index, y=ass['total'])
+        ass = team_df.groupby('over')['total'].sum()
+        sns.barplot(x=ass.index, y=ass)
         plt.show()
 
 
